@@ -1,29 +1,30 @@
 name: Build Windows Installer
 
 on:
-  workflow_dispatch:   # запуск вручную
-  # push:
-  #   tags: ['v*.*.*']  # пока отключим автозапуск на каждый коммит
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci || npm install
 
-      - name: Build UI
+      - name: Build UI (Vite)
         run: npm run build:ui
 
-      - name: Install native deps for Electron
-        run: npm run install-app-deps
+      - name: Install native deps for Electron (better-sqlite3)
+        run: npx electron-builder install-app-deps
 
       - name: Build Windows installer
         run: npm run build:win
@@ -33,6 +34,5 @@ jobs:
         with:
           name: Offline-POS-Installer
           path: |
-            dist/Offline POS Setup *.exe
-            dist/win-unpacked/**
-
+            release/*.exe
+            release/win-unpacked/**
