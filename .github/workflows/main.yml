@@ -1,10 +1,14 @@
+
+(или просто вставь весь файл из этого примера и сохрани)
+
+Полный рабочий `main.yml`:
+```yaml
 name: Build Windows Installer
 
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*.*.*'
+    tags: ['v*.*.*']
 
 jobs:
   build:
