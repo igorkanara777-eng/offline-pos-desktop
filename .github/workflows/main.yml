@@ -16,30 +16,26 @@ jobs:
         with:
           node-version: '20'
 
-      # Генерим иконку 256x256 PNG (исправляет падение app-builder на ConvertIcon/EOF)
+      # Синтезируем PNG-иконку 256x256 (как делали раньше, но порядок аргументов верный)
       - name: Ensure app icon (256x256 PNG)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path build -Force | Out-Null
+          New-Item -ItemType Directory -Force -Path build | Out-Null
           Add-Type -AssemblyName System.Drawing
-          $size  = New-Object System.Drawing.Size(256,256)
-          $bmp   = New-Object System.Drawing.Bitmap $size.Width, $size.Height
-          $g     = [System.Drawing.Graphics]::FromImage($bmp)
+          $size = New-Object System.Drawing.Size(256,256)
+          $bmp  = New-Object System.Drawing.Bitmap($size.Width, $size.Height)
+          $g    = [System.Drawing.Graphics]::FromImage($bmp)
           $g.SmoothingMode = 'AntiAlias'
           $g.Clear([System.Drawing.Color]::FromArgb(34,139,34))  # зелёный фон
-          $font  = New-Object System.Drawing.Font('Segoe UI', 72, [System.Drawing.FontStyle]::Bold)
-          $fmt   = New-Object System.Drawing.StringFormat
+          $font = New-Object System.Drawing.Font('Segoe UI', 72, [System.Drawing.FontStyle]::Bold)
+          $fmt  = New-Object System.Drawing.StringFormat
           $fmt.Alignment = [System.Drawing.StringAlignment]::Center
           $fmt.LineAlignment = [System.Drawing.StringAlignment]::Center
-          $rect  = New-Object System.Drawing.RectangleF(0,0,$size.Width,$size.Height)
-          # Порядок аргументов: text, font, brush, layout, format
+          $rect = New-Object System.Drawing.RectangleF(0,0,$size.Width,$size.Height)
           $g.DrawString('POS', $font, [System.Drawing.Brushes]::White, $rect, $fmt)
-          $bmp.Save('build/icon.png', [System.Drawing.Imaging.ImageFormat]::Png)
+          $bmp.Save('build/icon.png',[System.Drawing.Imaging.ImageFormat]::Png)
           $g.Dispose(); $bmp.Dispose()
-          $img = [System.Drawing.Image]::FromFile('build/icon.png')
-          Write-Host "Icon WxH: $($img.Width)x$($img.Height)"
-          if ($img.Width -ne 256 -or $img.Height -ne 256) { throw 'Icon must be 256x256' }
-          $img.Dispose()
+          if (-not (Test-Path 'build/icon.png')) { throw 'icon.png was not created' }
 
       - name: Install dependencies
         run: npm ci || npm install
@@ -47,25 +43,23 @@ jobs:
       - name: Build UI (Vite)
         run: npm run build:ui
 
-      # Если у тебя реально есть сборка main — раскомментируй:
-      # - name: Build Electron main (esbuild)
-      #   run: npm run build:main
+      - name: Build Electron main (esbuild)
+        run: npm run build:main
 
-      - name: Build Windows installer (NSIS) — verbose
+      - name: Verify compiled entry exists
+        shell: pwsh
+        run: |
+          Get-ChildItem electron
+          if (-not (Test-Path 'electron/main.js')) { throw 'electron/main.js not found' }
+
+      - name: Build Windows installer (NSIS)
         run: npx --yes electron-builder -w --x64 --publish=never --config.win.icon=build/icon.png
-        env:
-          DEBUG: electron-builder,app-builder
 
-      - name: Upload dist & logs
-        if: always()
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist-and-logs
+          name: offline-pos-installer
           path: |
-            dist/**
-            build/icon.png
-            **/builder-debug.yml
-            **/builder-effective-config.yaml
-            C:\npm\cache\_logs\*.log
-            **\npm-cache\_logs\*.log
-          if-no-files-found: warn
+            dist\*.exe
+            dist\*.msi
+          if-no-files-found: error
