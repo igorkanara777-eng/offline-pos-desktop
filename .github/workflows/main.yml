@@ -1,14 +1,9 @@
-
-(или просто вставь весь файл из этого примера и сохрани)
-
-Полный рабочий `main.yml`:
-```yaml
 name: Build Windows Installer
 
 on:
-  workflow_dispatch:
-  push:
-    tags: ['v*.*.*']
+  workflow_dispatch:   # запуск вручную
+  # push:
+  #   tags: ['v*.*.*']  # пока отключим автозапуск на каждый коммит
 
 jobs:
   build:
@@ -40,3 +35,4 @@ jobs:
           path: |
             dist/Offline POS Setup *.exe
             dist/win-unpacked/**
+
