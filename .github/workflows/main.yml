@@ -16,19 +16,30 @@ jobs:
         with:
           node-version: '20'
 
-      # Синтезируем PNG-иконку 256x256 (как делали раньше, но порядок аргументов верный)
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build UI (Vite)
+        run: npm run build:ui
+
+      - name: Build Electron main (esbuild)
+        run: npm run build:main
+
+      - name: Build Electron preload (esbuild)
+        run: npm run build:preload
+
       - name: Ensure app icon (256x256 PNG)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path build | Out-Null
+          New-Item -ItemType Directory -Path build -Force | Out-Null
           Add-Type -AssemblyName System.Drawing
           $size = New-Object System.Drawing.Size(256,256)
-          $bmp  = New-Object System.Drawing.Bitmap($size.Width, $size.Height)
+          $bmp  = New-Object System.Drawing.Bitmap $size.Width, $size.Height
           $g    = [System.Drawing.Graphics]::FromImage($bmp)
           $g.SmoothingMode = 'AntiAlias'
-          $g.Clear([System.Drawing.Color]::FromArgb(34,139,34))  # зелёный фон
-          $font = New-Object System.Drawing.Font('Segoe UI', 72, [System.Drawing.FontStyle]::Bold)
-          $fmt  = New-Object System.Drawing.StringFormat
+          $g.Clear([System.Drawing.Color]::FromArgb(34,139,34))
+          $font = New-Object System.Drawing.Font('Segoe UI',72,[System.Drawing.FontStyle]::Bold)
+          $fmt = New-Object System.Drawing.StringFormat
           $fmt.Alignment = [System.Drawing.StringAlignment]::Center
           $fmt.LineAlignment = [System.Drawing.StringAlignment]::Center
           $rect = New-Object System.Drawing.RectangleF(0,0,$size.Width,$size.Height)
@@ -37,30 +48,14 @@ jobs:
           $g.Dispose(); $bmp.Dispose()
           if (-not (Test-Path 'build/icon.png')) { throw 'icon.png was not created' }
 
-      - name: Install dependencies
-        run: npm ci || npm install
-
-- name: Build Electron main (esbuild)
-  run: npm run build:main
-
-- name: Build Electron preload (esbuild)
-  run: npm run build:preload
-
-
-      - name: Verify compiled entry exists
-        shell: pwsh
-        run: |
-          Get-ChildItem electron
-          if (-not (Test-Path 'electron/main.js')) { throw 'electron/main.js not found' }
-
       - name: Build Windows installer (NSIS)
         run: npx --yes electron-builder -w --x64 --publish=never --config.win.icon=build/icon.png
 
-      - name: Upload installer artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: offline-pos-installer
           path: |
             dist\*.exe
-            dist\*.msi
-          if-no-files-found: error
+            dist\*.zip
+
