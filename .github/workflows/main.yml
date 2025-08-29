@@ -16,8 +16,11 @@ jobs:
         with:
           node-version: '20'   # без cache, чтобы не требовался lock-файл
 
-      - name: Install deps
-        run: npm install --no-audit --no-fund
+      - name: Install dependencies
+  run: |
+    npm install
+    npm ls @vitejs/plugin-react
+
 
       - name: Build UI (Vite)
         run: npm run build:ui
