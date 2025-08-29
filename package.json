@@ -4,12 +4,13 @@
   "private": true,
   "description": "Offline POS desktop app",
   "main": "electron/main.js",
+  "type": "commonjs",
 
   "scripts": {
     "dev": "vite",
     "build:ui": "vite build",
     "install-app-deps": "electron-builder install-app-deps",
-    "build:win": "npm run build:ui && electron-builder --win --x64 --publish never"
+    "build:win": "electron-builder --win --x64 -p never"
   },
 
   "dependencies": {
@@ -17,32 +18,27 @@
   },
 
   "devDependencies": {
+    "@types/node": "^20.11.30",
     "electron": "31.7.7",
     "electron-builder": "24.13.3",
-    "typescript": "^5.6.2",
+    "typescript": "^5.5.4",
     "vite": "5.4.19"
   },
 
   "build": {
     "appId": "com.igorkanara.offlinepos",
     "productName": "Offline POS",
-    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
     "files": [
+      "app/**",
       "dist/**",
       "electron/**",
       "package.json"
     ],
-    "directories": {
-      "output": "release"
-    },
+    "extraMetadata": { "main": "electron/main.js" },
+    "asarUnpack": ["node_modules/better-sqlite3/**/*"],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
-      ],
-      "artifactName": "Offline-POS-Setup-${version}.${ext}"
-    },
-    "extraMetadata": {
-      "main": "electron/main.js"
-    }
-  }
-}
+        { "target":
