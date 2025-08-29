@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'       # не указываем cache, чтобы не требовался lock-файл
+          node-version: '20'   # без cache, чтобы не требовался lock-файл
 
       - name: Install deps
         run: npm install --no-audit --no-fund
@@ -26,7 +26,7 @@ jobs:
         env:
           npm_config_build_from_source: true
           npm_config_runtime: electron
-          npm_config_target: 31.7.7
+          npm_config_target: 28.2.10        # целимся в Electron 28 (есть пребилды)
           npm_config_disturl: https://electronjs.org/headers
           npm_config_target_arch: x64
         run: npm run install-app-deps
