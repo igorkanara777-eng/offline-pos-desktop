@@ -15,20 +15,46 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # cache не включаем, т.к. у нас нет lock-файла
+        # cache намеренно не включаем, т.к. lock-файла нет
+
+      # 256x256 PNG, чтобы electron-builder не падал на конвертере иконок
+      - name: Ensure app icon (256x256 PNG)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path build -Force | Out-Null
+          Add-Type -AssemblyName System.Drawing
+          $bmp = New-Object System.Drawing.Bitmap 256,256
+          $g   = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.SmoothingMode = 'AntiAlias'
+          $g.Clear([System.Drawing.Color]::FromArgb(34,139,34))  # зелёный фон
+          $font = New-Object System.Drawing.Font('Segoe UI', 72, [System.Drawing.FontStyle]::Bold)
+          $fmt  = New-Object System.Drawing.StringFormat
+          $fmt.Alignment = 'Center'
+          $fmt.LineAlignment = 'Center'
+          $rect = New-Object System.Drawing.RectangleF(0,0,256,256)
+          $g.DrawString('POS',[System.Drawing.Brushes]::White,$font,$rect,$fmt)
+          $bmp.Save('build\icon.png',[System.Drawing.Imaging.ImageFormat]::Png)
+          $g.Dispose(); $bmp.Dispose()
+          if (-not (Test-Path 'build\icon.png')) { throw 'icon.png was not created' }
 
       - name: Install dependencies
         run: npm ci || npm install
 
-      - name: Ensure dev deps (Vite/React/Tailwind/PostCSS/esbuild)
-        run: npm install -D tailwindcss@3 postcss@8 autoprefixer@10 @vitejs/plugin-react@4 esbuild@0.23
+      # На всякий случай — подтягиваем инструменты, если их нет в package.json
+      - name: Ensure dev deps (Vite/React plugin/Tailwind/PostCSS/esbuild)
+        run: npm i -D vite@5 @vitejs/plugin-react@4 tailwindcss@3 postcss@8 autoprefixer@10 esbuild@0.23
+
+      # Гарантируем, что прод-зависимости есть (React, BSQL3)
+      - name: Ensure prod deps (React & better-sqlite3)
+        run: npm i react@18 react-dom@18 better-sqlite3@9 --no-audit --no-fund
 
       - name: Build UI (Vite)
         run: npm run build:ui
 
       - name: Build Electron main (esbuild)
-        run: npm run build:electron
+        run: npm run build:main
 
+      # Пересборка native-модулей под Electron (better-sqlite3)
       - name: Install native deps for Electron (better-sqlite3)
         run: npx electron-builder install-app-deps
 
@@ -38,5 +64,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OfflinePOS-win
-          path: dist/*.exe
+          name: OfflinePOS-Installer
+          path: |
+            dist/*.exe
+            dist/*.msi
+          if-no-files-found: error
+          retention-days: 7
