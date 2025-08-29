@@ -6,6 +6,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -13,24 +14,28 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'   # без cache
+          node-version: '20'       # не указываем cache, чтобы не требовался lock-файл
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install deps
+        run: npm install --no-audit --no-fund
 
       - name: Build UI (Vite)
         run: npm run build:ui
 
       - name: Install native deps for Electron (better-sqlite3)
-        run: npx electron-builder install-app-deps
+        env:
+          npm_config_build_from_source: true
+          npm_config_runtime: electron
+          npm_config_target: 31.7.7
+          npm_config_disturl: https://electronjs.org/headers
+          npm_config_target_arch: x64
+        run: npm run install-app-deps
 
-      - name: Build Windows installer
+      - name: Build Windows installer (NSIS)
         run: npm run build:win
 
-      - name: Upload artifact
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: Offline-POS-Installer
-          path: |
-            dist/*.exe
-            dist/win-unpacked/**
+          path: dist/*.exe
