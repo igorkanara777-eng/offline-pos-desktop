@@ -1,72 +1,48 @@
 {
   "name": "offline-pos-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
-  "productName": "Offline POS",
-  "appId": "com.example.offlinepos",
+  "description": "Offline POS desktop app",
   "main": "electron/main.js",
-  "type": "module",
+
   "scripts": {
-    "dev": "concurrently \"vite\" \"electron .\"",
+    "dev": "vite",
     "build:ui": "vite build",
     "install-app-deps": "electron-builder install-app-deps",
-    "build": "vite build && tsc -p electron && electron-builder",
-    "build:win": "npm run build && electron-builder --win nsis"
+    "build:win": "npm run build:ui && electron-builder --win --x64 --publish never"
   },
+
   "dependencies": {
-    "better-sqlite3": "^9.4.0",
-    "electron-store": "^9.0.0",
-    "node-cron": "^3.0.3",
-    "electron-updater": "^6.1.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "better-sqlite3": "^11.5.0"
   },
+
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.1",
-    "concurrently": "^8.2.2",
-    "electron": "^31.2.0",
-    "electron-builder": "^24.13.3",
-    "typescript": "^5.5.4",
-    "vite": "^5.4.2",
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "tailwindcss": "^3.4.9",
-    "postcss": "^8.4.41",
-    "autoprefixer": "^10.4.20"
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3",
+    "typescript": "^5.6.2",
+    "vite": "5.4.19"
   },
+
   "build": {
+    "appId": "com.igorkanara.offlinepos",
+    "productName": "Offline POS",
     "asar": true,
-    "asarUnpack": [
-      "node_modules/better-sqlite3/build/Release/*.node",
-      "node_modules/better-sqlite3/**/*"
-    ],
     "files": [
       "dist/**",
       "electron/**",
-      "src/backend/**",
       "package.json"
     ],
     "directories": {
-      "buildResources": "build"
+      "output": "release"
     },
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
+        { "target": "nsis", "arch": ["x64"] }
       ],
-      "artifactName": "${productName} Setup ${version}.exe"
+      "artifactName": "Offline-POS-Setup-${version}.${ext}"
     },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowElevation": true,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "deleteAppDataOnUninstall": false
+    "extraMetadata": {
+      "main": "electron/main.js"
     }
   }
 }
