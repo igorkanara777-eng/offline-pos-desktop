@@ -4,12 +4,12 @@
     "outDir": "../electron",
     "module": "ESNext",
     "target": "ES2020",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "Node",
     "noEmit": false,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowJs": true,
+    "resolveJsonModule": true
   },
-  "include": [
-    "./**/*.ts"
-  ]
+  "include": ["./**/*.ts", "../src/backend/**/*.js"]
 }
