@@ -1,17 +1,11 @@
-import type { Product } from "../electron/db";
+// src/renderer.d.ts
+export {};
 
 declare global {
   interface Window {
     api: {
-      app: { version(): Promise<string> };
-      products: {
-        list(q?: string): Promise<Product[]>;
-        create(p: Omit<Product, "id">): Promise<Product>;
-        update(p: Product): Promise<Product>;
-        remove(id: number): Promise<void>;
-        adjust(id: number, delta: number): Promise<Product>;
-      };
+      addItem(data: { name: string; price: number; stock: number }): Promise<number>;
+      listItems(): Promise<Array<{ id: number; name: string; price: number; stock: number }>>;
     };
   }
 }
-export {};
