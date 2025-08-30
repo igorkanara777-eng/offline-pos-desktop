@@ -1,6 +1,6 @@
 {
   "name": "offline-pos-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "commonjs",
   "main": "electron/main.js",
@@ -9,7 +9,9 @@
     "build:main": "esbuild electron/main.ts --bundle --platform=node --format=cjs --external:electron --outfile=electron/main.js",
     "build:preload": "esbuild electron/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=electron/preload.js",
     "build": "npm run build:ui && npm run build:main && npm run build:preload",
-    "build:win": "electron-builder -w --x64 --publish=never --config.win.icon=build/icon.png"
+    "build:win": "electron-builder -w --x64 --publish=never --config.win.icon=build/icon.png",
+    "start": "electron .",
+    "dev": "vite"
   },
   "dependencies": {
     "better-sqlite3": "^9.6.0",
@@ -43,6 +45,9 @@
       "package.json"
     ],
     "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
     "win": {
       "target": "nsis",
       "icon": "build/icon.png"
@@ -54,4 +59,3 @@
     }
   }
 }
-
