@@ -1,0 +1,58 @@
+// electron/main.ts
+import { app as electronApp, BrowserWindow, ipcMain, shell } from 'electron';
+import path from 'path';
+
+// если в проекте есть своё "app" (например, express), оставляй его как "server"/"expressApp",
+// НО НЕ "app", чтобы не конфликтовало с Electron.
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  if (require('electron-squirrel-startup')) electronApp.quit();
+} catch { /* ignore */ }
+
+function resolveHtmlPath(): string {
+  const devUrl = process.env.VITE_DEV_SERVER_URL;
+  if (devUrl) return devUrl;                       // dev-режим
+  return path.join(__dirname, '../dist/index.html'); // прод
+}
+
+let mainWin: BrowserWindow | null = null;
+
+async function createWindow() {
+  mainWin = new BrowserWindow({
+    width: 1100,
+    height: 800,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+    },
+    icon: path.join(process.resourcesPath, 'build', 'icon.png'),
+  });
+
+  mainWin.once('ready-to-show', () => mainWin?.show());
+
+  const htmlPath = resolveHtmlPath();
+  if (htmlPath.startsWith('http')) {
+    await mainWin.loadURL(htmlPath);
+    // mainWin.webContents.openDevTools({ mode: 'detach' }); // включи при отладке
+  } else {
+    await mainWin.loadFile(htmlPath);
+  }
+
+  mainWin.on('closed', () => (mainWin = null));
+}
+
+electronApp.whenReady().then(createWindow);
+
+electronApp.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') electronApp.quit();
+});
+
+electronApp.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+
+// ipcMain.handle('ping', () => 'pong');
