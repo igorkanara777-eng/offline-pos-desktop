@@ -1,27 +1,35 @@
 // electron/db.ts
-import path from "node:path";
-import { app } from "electron";
-import Database from "better-sqlite3";
+import path from 'path';
+import Database from 'better-sqlite3';
+import { app } from 'electron';
 
-export type Product = { id?: number; sku: string; name: string; price: number; stock: number; };
+let db: Database.Database | null = null;
 
-let db: Database.Database;
-
-export function initDb() {
-  const dbPath = path.join(app.getPath("userData"), "pos.db");
+export async function ensureDb() {
+  if (db) return;
+  const dbPath = path.join(app.getPath('userData'), 'pos.sqlite');
   db = new Database(dbPath);
-  db.pragma("journal_mode = WAL");
+  db.pragma('journal_mode = WAL');
   db.exec(`
-    CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sku TEXT UNIQUE,
-      name TEXT NOT NULL,
+    CREATE TABLE IF NOT EXISTS items (
+      id    INTEGER PRIMARY KEY AUTOINCREMENT,
+      name  TEXT NOT NULL,
       price REAL NOT NULL,
-      stock INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )
+      stock INTEGER NOT NULL DEFAULT 0
+    );
   `);
+}
+
+export function addItem(name: string, price: number, stock: number) {
+  if (!db) throw new Error('DB not initialized');
+  const stmt = db.prepare('INSERT INTO items (name, price, stock) VALUES (?, ?, ?)');
+  const info = stmt.run(name, price, stock);
+  return info.lastInsertRowid;
+}
+
+export function listItems() {
+  if (!db) throw new Error('DB not initialized');
+  return db.prepare('SELECT id, name, price, stock FROM items ORDER BY id DESC').all();
 }
 
 export const listProducts = (q="") =>
